@@ -24,28 +24,59 @@ app.get('/', (req, res) => {
 app.post('/api/user/create', (req, res) => {
     
     
-    const newUser = {
+    const user = {
         PLATEFORME_ID: req.body.platId,
-        USERNAME: req.body.username,
+        USERNAME: null,
         EMAIL: null,
-        PWD: req.body.password,
-        PHONENUMBER: req.body.phoneNumber,
-        JOINED_DATE: req.body.joinedDate,
-        BIRTHDATE: req.body.birthdate,
-        COUNTRY: req.body.country
+        PWD: null,
+        JOINED_DATE: null,
+        BIRTHDATE: null,
+        COUNTRY: null
     }
-    
+
+    const regex = new RegExp(/^[a-zA-Z0-9_\-]+$/);
+    if (regex.test(req.body.username)) {
+        user.USERNAME = req.body.username;
+    } else {
+        res.send("t'as essayé de nous entuber petite p*te?");
+        return;
+    }
+
     if (validator.validate(req.body.email)) {
-        newUser.EMAIL = req.body.email;
+        user.EMAIL = req.body.email;
     } else {
         res.send('E.M.A.I.L troudbal, le truc avec un @test.fr');
+        return;
     }
+
+    const regex2 = new RegExp(/^[a-zA-Z]+$/);
+    if (regex2.test(req.body.country)) {
+        user.COUNTRY = req.body.country;
+    } else {
+        res.send("tu nous prends pour des américains?");
+        return;
+    }
+
+    if ((new Date(req.body.joinedDate)).getTime() > 0) {
+        user.JOINED_DATE = req.body.joinedDate;
+    } else {
+        res.send("t'as fumé un joint?");
+        return;
+    }
+
+    if ((new Date(req.body.birthdate)).getTime() > 0) {
+        user.BIRTHDATE = req.body.birthdate;
+    } else {
+        res.send("t'as cru qu'on était né de la dernière pluie?");
+        return;
+    }
+
     
 
-    bcrypt.hash(newUser.PWD, 10).then(async function(hash) {
-        newUser.PWD = hash;
-        const columns = Object.keys(newUser);
-        const values = Object.values(newUser);
+    bcrypt.hash(req.body.password, 10).then(async function(hash) {
+        user.PWD = hash;
+        const columns = Object.keys(user);
+        const values = Object.values(user);
 
         const sqlQuery = `
         INSERT INTO user (${columns.join(',')})
