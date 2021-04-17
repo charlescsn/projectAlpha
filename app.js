@@ -7,6 +7,8 @@ const validator = require("email-validator");
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const tools = require('./functions');
+
 const knex = require('knex')({
     client: 'mysql',
     connection: {
@@ -69,9 +71,7 @@ app.post('/api/user/create', (req, res) => {
     } else {
         res.send("t'as cru qu'on était né de la dernière pluie?");
         return;
-    }
-
-    
+    }   
 
     bcrypt.hash(req.body.password, 10).then(async function(hash) {
         user.PWD = hash;
@@ -94,6 +94,8 @@ app.post('/api/user/create', (req, res) => {
     });
 })
 
+// user
+
 app.post('/api/user/login', async (req, res) => {
     const login = {
         USERNAME: req.body.username,
@@ -104,6 +106,7 @@ app.post('/api/user/login', async (req, res) => {
     const regex = new RegExp(/^[a-zA-Z0-9_\-]+$/);
     if (!regex.test(login.USERNAME)) {
         res.send("t'as essayé de nous entuber petite p*te?");
+        return;
     }
 
     try {
@@ -116,9 +119,45 @@ app.post('/api/user/login', async (req, res) => {
         if (result) {
             res.send('all good');
         } else {
-            res.send('all wrong')
+            res.send('all wrong');
         }
     })
 })
+
+
+// Payment
+
+app.post('/api/:userId/payment/card/new', (req, res) => {
+
+    const newCard = {
+        USER_ID : req.params.userId,
+        CARD: req.body.card,
+        CVC: req.body.CVC
+    }
+
+    // verifs
+
+ 
+    if (!tools.isNumberOfLengthN(newCard.CARD, 4)) {
+        res.send('Request couldn\' be sent');
+        return;
+    }
+    
+    if (!tools.isNumberOfLengthN(newCard.CVC, 3)) {
+        res.send('Request couldn\' be sent');
+        return;
+    }
+    
+    if (isNaN(req.params.userId)) {
+        res.send('Request couldn\' be sent');
+        return;
+    }
+
+    res.send(tools.createNewCard(newCard, knex) ? 'good': 'Request couldn\' be sent');
+
+
+})
+
+
 
 app.listen(3000);
