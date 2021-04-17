@@ -128,7 +128,7 @@ app.post('/api/user/login', async (req, res) => {
 // Payment
 
 app.post('/api/:userId/payment/card/new', (req, res) => {
-
+    console.log(req.params);
     const newCard = {
         USER_ID : req.params.userId,
         CARD: req.body.card,
@@ -156,6 +156,38 @@ app.post('/api/:userId/payment/card/new', (req, res) => {
     res.send(tools.createNewCard(newCard, knex) ? 'good': 'Request couldn\' be sent');
 
 
+})
+
+app.post('/api/:userId/payment/delete/:cardId', (req, res) => {
+    const card = {
+        USER_ID: req.params.userId,
+        PAYMENT_ID: req.params.cardId
+    }
+
+    if (isNaN(req.params.userId)) {
+        res.send('Request couldn\' be sent');
+        return;
+    }
+
+    if (isNaN(req.params.cardId)) {
+        res.send('Request couldn\' be sent');
+        return;
+    }
+
+    res.send(tools.deleteCard(card, knex) ? 'good': 'Request couldn\' be sent');
+})
+
+app.post('/api/:userId/payment/cards/delete', (req, res) => {
+    const card = {
+        USER_ID: req.params.userId
+    }
+
+    if (isNaN(req.params.userId)) {
+        res.send('Request couldn\' be sent');
+        return;
+    }
+
+    res.send(tools.deleteCards(card, knex) ? 'good': 'Request couldn\' be sent');
 })
 
 
