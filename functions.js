@@ -1,3 +1,5 @@
+const { default: knex } = require("knex");
+
 module.exports = {
     isNumberOfLengthN: function (number, length) {
         if (number) {
@@ -29,7 +31,7 @@ module.exports = {
         const  sqlQuery = `
             DELETE FROM payment
             WHERE USER_ID = ${card.USER_ID}
-            AND PAYMENT_ID = ${card.PAYMENT_ID} 
+            AND CARD_ID = ${card.CARD_ID} 
         `;
 
         try {
@@ -51,9 +53,34 @@ module.exports = {
             await knex.raw(sqlQuery);
         } catch (e) {
             console.error('error: ', e);
-            return false
+            return false;
         }
         return true;
-    }
+    },
+
+    getCards: async function (USER_ID, knex) {
+        let rep;
+        try {
+            rep = await knex.select().from('PAYMENT').where('USER_ID', USER_ID);
+        } catch (e) {
+            console.error('error: ', e);
+            return false;
+        }
+        return rep;
+    },
+
+    getCard: async function (card, knex) {
+        let rep;
+        try {
+            rep = await knex.select().from('PAYMENT').where({
+                CARD_ID: card.CARD_ID,
+                USER_ID: card.USER_ID
+            })
+        } catch (e) {
+            console.error('error: ', e);
+            return false;
+        }
+        return rep;
+    },
 
 }

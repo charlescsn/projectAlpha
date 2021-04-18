@@ -161,15 +161,15 @@ app.post('/api/:userId/payment/card/new', (req, res) => {
 app.post('/api/:userId/payment/delete/:cardId', (req, res) => {
     const card = {
         USER_ID: req.params.userId,
-        PAYMENT_ID: req.params.cardId
+        CARD_ID: req.params.cardId
     }
 
-    if (isNaN(req.params.userId)) {
+    if (isNaN(card.USER_ID)) {
         res.send('Request couldn\' be sent');
         return;
     }
 
-    if (isNaN(req.params.cardId)) {
+    if (isNaN(card.CARD_ID)) {
         res.send('Request couldn\' be sent');
         return;
     }
@@ -182,7 +182,7 @@ app.post('/api/:userId/payment/cards/delete', (req, res) => {
         USER_ID: req.params.userId
     }
 
-    if (isNaN(req.params.userId)) {
+    if (isNaN(card.USER_ID)) {
         res.send('Request couldn\' be sent');
         return;
     }
@@ -190,6 +190,52 @@ app.post('/api/:userId/payment/cards/delete', (req, res) => {
     res.send(tools.deleteCards(card, knex) ? 'good': 'Request couldn\' be sent');
 })
 
+app.get('/api/:userId/payment/cards', async (req, res) => {
+    const USER_ID = req.params.userId;
+    
+    if (isNaN(USER_ID)) {
+        res.send('Request couldn\' be sent');
+        return;
+    }
+
+    const rep = await tools.getCards(USER_ID, knex);
+    res.status(200).json({
+        statusCode: 200,
+        message: "Successful",
+        data: rep,
+    });
+})
+
+app.get('/api/:userId/payment/card/:cardId', async (req, res) => {
+    const card = {
+        USER_ID: req.params.userId,
+        CARD_ID: req.params.cardId
+    }
+
+    if (isNaN(card.USER_ID)) {
+        res.send('Request couldn\' be sent');
+        return;
+    }
+
+    if (isNaN(card.CARD_ID)) {
+        res.send('Request couldn\' be sent');
+        return;
+    }
+
+    const rep = await tools.getCard(card, knex);
+    if (rep.length == 0) {
+        res.status(404).json({
+            statusCode: 404,
+            message: "No data found :/",
+        });
+        return;
+    }
+    res.status(200).json({
+        statusCode: 200,
+        message: "Successful",
+        data: rep,
+    });
+})
 
 
 app.listen(3000);
