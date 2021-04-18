@@ -2,7 +2,7 @@ const { default: knex } = require("knex");
 
 module.exports = {
     isNumberOfLengthN: function (number, length) {
-        if (number) {
+        if (number || number === 0) {
             return number.toString().length !== length || isNaN(number) ? false : true;
         } else {
             return false
@@ -64,7 +64,7 @@ module.exports = {
             rep = await knex.select().from('PAYMENT').where('USER_ID', USER_ID);
         } catch (e) {
             console.error('error: ', e);
-            return false;
+            return [];
         }
         return rep;
     },
@@ -78,9 +78,52 @@ module.exports = {
             })
         } catch (e) {
             console.error('error: ', e);
-            return false;
+            return [];
         }
         return rep;
+    },
+
+    insertNewGame: async function (newGame, knex) {
+        const columns = Object.keys(newGame);
+        const rows = Object.values(newGame);
+
+        const sqlQuery = `
+            INSERT INTO library (${columns.join(',')}, STATUS, SUSPENDED)
+            VALUES (${rows.join(',')}, 'Active', false)
+        `;
+
+        try {
+            await knex.raw(sqlQuery);
+        } catch (error) {
+            console.error('error : ', error);
+            return false;
+        }
+        return true;
+    },
+
+    setStatus: async function (status, knex) {
+
+        const statusList = {
+            0: 'Inactive',
+            1: 'Active',
+            10: 'Suspended'
+        };
+
+        const sqlQuery = `
+            UPDATE library
+            SET STATUS = "${statusList[status.STATUS]}"
+            WHERE USER_ID = ${status.USER_ID}
+            AND GAME_NAME = ${status.GAME_NAME};
+        `;
+        let test;
+        try {
+            test = await knex.raw(sqlQuery);
+        } catch (e) {
+            console.error('error: ', e);
+            return false;
+        }
+        console.log('test: ',test);
+        return test;
     },
 
 }

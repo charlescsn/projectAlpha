@@ -139,21 +139,21 @@ app.post('/api/:userId/payment/card/new', (req, res) => {
 
  
     if (!tools.isNumberOfLengthN(newCard.CARD, 4)) {
-        res.send('Request couldn\' be sent');
+        res.send('Request couldn\'t be sent');
         return;
     }
     
     if (!tools.isNumberOfLengthN(newCard.CVC, 3)) {
-        res.send('Request couldn\' be sent');
+        res.send('Request couldn\'t be sent');
         return;
     }
     
     if (isNaN(req.params.userId)) {
-        res.send('Request couldn\' be sent');
+        res.send('Request couldn\'t be sent');
         return;
     }
 
-    res.send(tools.createNewCard(newCard, knex) ? 'good': 'Request couldn\' be sent');
+    res.send(tools.createNewCard(newCard, knex) ? 'good': 'Request couldn\'t be sent');
 
 
 })
@@ -165,16 +165,16 @@ app.post('/api/:userId/payment/delete/:cardId', (req, res) => {
     }
 
     if (isNaN(card.USER_ID)) {
-        res.send('Request couldn\' be sent');
+        res.send('Request couldn\'t be sent');
         return;
     }
 
     if (isNaN(card.CARD_ID)) {
-        res.send('Request couldn\' be sent');
+        res.send('Request couldn\'t be sent');
         return;
     }
 
-    res.send(tools.deleteCard(card, knex) ? 'good': 'Request couldn\' be sent');
+    res.send(tools.deleteCard(card, knex) ? 'good': 'Request couldn\'t be sent');
 })
 
 app.post('/api/:userId/payment/cards/delete', (req, res) => {
@@ -183,18 +183,18 @@ app.post('/api/:userId/payment/cards/delete', (req, res) => {
     }
 
     if (isNaN(card.USER_ID)) {
-        res.send('Request couldn\' be sent');
+        res.send('Request couldn\'t be sent');
         return;
     }
 
-    res.send(tools.deleteCards(card, knex) ? 'good': 'Request couldn\' be sent');
+    res.send(tools.deleteCards(card, knex) ? 'good': 'Request couldn\'t be sent');
 })
 
 app.get('/api/:userId/payment/cards', async (req, res) => {
     const USER_ID = req.params.userId;
     
     if (isNaN(USER_ID)) {
-        res.send('Request couldn\' be sent');
+        res.send('Request couldn\'t be sent');
         return;
     }
 
@@ -213,12 +213,12 @@ app.get('/api/:userId/payment/card/:cardId', async (req, res) => {
     }
 
     if (isNaN(card.USER_ID)) {
-        res.send('Request couldn\' be sent');
+        res.send('Request couldn\'t be sent');
         return;
     }
 
     if (isNaN(card.CARD_ID)) {
-        res.send('Request couldn\' be sent');
+        res.send('Request couldn\'t be sent');
         return;
     }
 
@@ -235,6 +235,60 @@ app.get('/api/:userId/payment/card/:cardId', async (req, res) => {
         message: "Successful",
         data: rep,
     });
+})
+
+// Games
+
+app.post('/api/:userId/game/:gameName', (req,res) => {
+    
+    const newGame = {
+        USER_ID: req.params.userId,
+        GAME_NAME: `'${req.params.gameName}'`,
+        JOINED_DATE: Date.now()        
+    }
+
+    
+    if (isNaN(newGame.USER_ID)) {
+        res.send('Request couldn\'t be sent');
+        return;
+    }
+
+    const regex = new RegExp(/^[a-zA-Z0-9_'\-]+$/);
+    if (!regex.test(newGame.GAME_NAME)) {
+        res.send("t'as essayé de nous entuber petite p*te?");
+        return;
+    }
+
+    res.send(tools.insertNewGame(newGame, knex) ? 'created': 'Request couldn\'t be sent');
+})
+
+app.post('/api/:userId/game/update/:gameName', async (req,res) => {
+    
+    const newStatus = {
+        STATUS: req.body.status,
+        USER_ID: req.params.userId,
+        GAME_NAME: `'${req.params.gameName}'`
+    }
+
+    if (!tools.isNumberOfLengthN(newStatus.STATUS, 1) || (newStatus.STATUS != 0 && newStatus.STATUS != 1)) {
+        res.send('Request couldn\'t be sent1');
+        return;
+    }
+    
+    if (isNaN(newStatus.USER_ID)) {
+        res.send('Request couldn\'t be sent2');
+        return;
+    }
+
+    const regex = new RegExp(/^[a-zA-Z0-9_'\-]+$/);
+    if (!regex.test(newStatus.GAME_NAME)) {
+        res.send("t'as essayé de nous entuber petite p*te?");
+        return;
+    }
+    let test = await tools.setStatus(newStatus, knex);
+    console.log('yoyo ',test[0].changedRows);
+
+    res.send( test[0].changedRows ? 'updated': 'Error');
 })
 
 
