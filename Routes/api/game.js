@@ -29,7 +29,7 @@ router.post('/update/:userId/:gameName', async (req,res) => {
     };
 
     if (newStatus.STATUS > 1) {
-        res.status(406).send({ msg: 'Invalid arguments11' });
+        res.status(406).send({ msg: 'Invalid arguments' });
         return;
     }
     
@@ -38,5 +38,29 @@ router.post('/update/:userId/:gameName', async (req,res) => {
     res.send( response[0].changedRows ? 'updated': 'Error');
 })
 
+router.post('/ban/:userId/:gameName', async (req,res) => {
+    const { userId, gameName } = req.params;
+    console.log('test : ', req.body.reason);
+    reason = req.body.reason;
+
+    const newBan = {
+        REASON: `'${reason.replace(/\'/g, "\\'")}'`,
+        DURATION: Number(req.body.duration)*1000*60*60*24,
+        USER_ID: userId,
+        DATE: Date.now(),
+        GAME_NAME: `'${gameName}'`
+    };
+
+    console.log(newBan);
+
+    if (!newBan.DURATION) {
+        res.status(406).send({ msg: 'Invalid arguments' });
+        return;
+    }
+    
+    let response = await tools.insertNewBan(newBan, knex);
+
+    res.send( response[0].affectedRows ? 'updated': 'Error');
+})
 
 module.exports = router;

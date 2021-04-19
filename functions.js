@@ -113,9 +113,11 @@ module.exports = {
         const sqlQuery = `
             UPDATE library
             SET STATUS = "${statusList[status.STATUS]}"
+            ${status.STATUS == 10 ? ', SUSPENDED = 1' : ''}
             WHERE USER_ID = ${status.USER_ID}
             AND GAME_NAME = ${status.GAME_NAME};
         `;
+        
         let response;
         try {
             response = await knex.raw(sqlQuery);
@@ -135,6 +137,34 @@ module.exports = {
         } else {
             res.status(406).send({ msg: 'Invalid arguments' })
         }
+    },
+
+    insertNewBan: async function (newBan, knex) {
+        const columns = Object.keys(newBan);
+        const rows = Object.values(newBan);
+        columns.pop();
+        rows.pop();
+
+        const sqlQuery = `
+        INSERT INTO suspended(${columns.join(',')}, LIBRARY_ID)
+        VALUES (${rows.join(',')}, (SELECT LIBRARY_ID FROM library WHERE USER_ID = ${newBan.USER_ID} AND GAME_NAME = ${newBan.GAME_NAME}))
+        `;
+
+        const newStatus = {
+            STATUS: 10,
+            USER_ID: newBan.USER_ID,
+            GAME_NAME: `${newBan.GAME_NAME}`
+        };
+
+        this.setStatus(newStatus, knex);
+
+        try {
+            response = await knex.raw(sqlQuery);
+        } catch (e) {
+            console.error('error: ', e);
+            return false;
+        }
+        return response;
     },
 
 }
