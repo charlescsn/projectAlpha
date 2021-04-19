@@ -15,8 +15,7 @@ router.post('/:userId/:gameName', tools.validateGameParams, async (req, res) => 
     }
 
     let response = await tools.insertNewGame(newGame, knex);
-    console.log(response);
-    res.send( response[0].affectedRows ? 'updated': 'Error');
+    res.send( response[0].affectedRows ? 'created': 'Error');
 });
 
 router.post('/update/:userId/:gameName', async (req,res) => {
@@ -36,11 +35,10 @@ router.post('/update/:userId/:gameName', async (req,res) => {
     let response = await tools.setStatus(newStatus, knex);
 
     res.send( response[0].changedRows ? 'updated': 'Error');
-})
+});
 
 router.post('/ban/:userId/:gameName', async (req,res) => {
     const { userId, gameName } = req.params;
-    console.log('test : ', req.body.reason);
     reason = req.body.reason;
 
     const newBan = {
@@ -51,8 +49,6 @@ router.post('/ban/:userId/:gameName', async (req,res) => {
         GAME_NAME: `'${gameName}'`
     };
 
-    console.log(newBan);
-
     if (!newBan.DURATION) {
         res.status(406).send({ msg: 'Invalid arguments' });
         return;
@@ -60,7 +56,31 @@ router.post('/ban/:userId/:gameName', async (req,res) => {
     
     let response = await tools.insertNewBan(newBan, knex);
 
-    res.send( response[0].affectedRows ? 'updated': 'Error');
+    res.send( response[0].affectedRows ? 'created': 'Error');
+});
+
+router.post('/wastedTime/:userId/:gameName', tools.validateGameParams, async (req,res) => {
+    const { userId, gameName } = req.params;
+    const time = Number(req.body.time)
+
+    const timeDTO = {
+        WASTED_TIME: Number(req.body.time) * 1000 * 60,
+        USER_ID: userId,
+        GAME_NAME: `'${gameName}'`,
+    }
+
+    if (!time) {
+        res.status(406).send({ msg: 'Invalid arguments' });
+        return;
+    }
+    
+    let response = await tools.setWastedTime(timeDTO, knex);
+
+    res.send( response[0].changedRows ? 'updated': 'Error');
+});
+
+router.get('/status/:userId/:gameName', (req, res) => {
+
 })
 
 module.exports = router;

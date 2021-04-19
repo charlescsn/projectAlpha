@@ -1,12 +1,57 @@
-const { default: knex } = require("knex");
+const validator = require("email-validator");
 
 module.exports = {
+
+    validateGameParams: function (req, res, next) {
+        const { userId, gameName } = req.params;
+        const regex = new RegExp(/^[a-zA-Z0-9_'\-]+$/);
+    
+        if (userId && !isNaN(userId) && gameName  && regex.test(gameName)) {
+            next();
+        } else {
+            res.status(406).send({ msg: 'Invalid arguments' })
+        }
+    },
     isNumberOfLengthN: function (number, length) {
         if (number || number === 0) {
             return number.toString().length !== length || isNaN(number) ? false : true;
         } else {
             return false
         }
+    },
+
+    validateUserBody: function (req, res, next) {
+        const usernameReg = new RegExp(/^[a-zA-Z0-9_\-]+$/);
+        const countryReg = new RegExp(/^[a-zA-Z]+$/);
+        const birthdate = new Date(req.body.birthdate).getTime()
+        // username test
+        if (!usernameReg.test(req.body.username)) res.status(406).send({msg: "Bad username"});
+        // email test
+        if (!validator.validate(req.body.email)) res.status(406).send({msg: "Bad email"});
+        // country test
+        if (!countryReg.test(req.body.country)) res.status(406).send({msg: "Bad country"});
+        // birthdate test
+        if (!(Date.now() > birthdate > 0)) res.status(406).send({msg: "Bad birthdate, unlucky dude"});
+        next();
+    },
+
+    createNewUser: async function (DTO, knex) {
+        const columns = Object.keys(DTO);
+        const rows = Object.values(DTO);
+
+        const sqlQuery = `
+            INSERT INTO user (${columns.join(',')})
+            VALUES (${rows.map(value => `'${value}'`).join(",")})
+        `;
+
+        let request;
+        try {
+            request = await knex.raw(sqlQuery);
+        } catch (error) {
+            console.error('error : ', error);
+            return false;
+        }
+        return request;
     },
 
     createNewCard: async function (newCard, knex) {
@@ -128,17 +173,6 @@ module.exports = {
         return response;
     },
 
-    validateGameParams: function (req, res, next) {
-        const { userId, gameName } = req.params;
-        const regex = new RegExp(/^[a-zA-Z0-9_'\-]+$/);
-    
-        if (userId && !isNaN(userId) && gameName  && regex.test(gameName)) {
-            next();
-        } else {
-            res.status(406).send({ msg: 'Invalid arguments' })
-        }
-    },
-
     insertNewBan: async function (newBan, knex) {
         const columns = Object.keys(newBan);
         const rows = Object.values(newBan);
@@ -167,4 +201,22 @@ module.exports = {
         return response;
     },
 
+    setWastedTime: async function (DTO, knex) {
+
+        const sqlQuery = `
+            UPDATE library
+            SET WASTED_TIME = "${DTO.WASTED_TIME}"
+            WHERE USER_ID = ${DTO.USER_ID}
+            AND GAME_NAME = ${DTO.GAME_NAME};
+        `;
+        
+        let response;
+        try {
+            response = await knex.raw(sqlQuery);
+        } catch (e) {
+            console.error('error: ', e);
+            return false;
+        }
+        return response;
+    },
 }
