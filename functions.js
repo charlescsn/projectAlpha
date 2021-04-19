@@ -92,13 +92,14 @@ module.exports = {
             VALUES (${rows.join(',')}, 'Active', false)
         `;
 
+        let response;
         try {
-            await knex.raw(sqlQuery);
+            response = await knex.raw(sqlQuery);
         } catch (error) {
             console.error('error : ', error);
             return false;
         }
-        return true;
+        return response;
     },
 
     setStatus: async function (status, knex) {
@@ -115,15 +116,25 @@ module.exports = {
             WHERE USER_ID = ${status.USER_ID}
             AND GAME_NAME = ${status.GAME_NAME};
         `;
-        let test;
+        let response;
         try {
-            test = await knex.raw(sqlQuery);
+            response = await knex.raw(sqlQuery);
         } catch (e) {
             console.error('error: ', e);
             return false;
         }
-        console.log('test: ',test);
-        return test;
+        return response;
+    },
+
+    validateGameParams: function (req, res, next) {
+        const { userId, gameName } = req.params;
+        const regex = new RegExp(/^[a-zA-Z0-9_'\-]+$/);
+    
+        if (userId && !isNaN(userId) && gameName  && regex.test(gameName)) {
+            next();
+        } else {
+            res.status(406).send({ msg: 'Invalid arguments' })
+        }
     },
 
 }

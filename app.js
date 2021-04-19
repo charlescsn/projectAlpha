@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 
+
 const bcrypt = require('bcrypt');
 const validator = require("email-validator");
 
@@ -8,17 +9,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const tools = require('./functions');
+const knex = require('./database');
 
-const knex = require('knex')({
-    client: 'mysql',
-    connection: {
-        host: 'localhost',
-        user: 'root',
-        password: '',
-        database: 'projectalpha'
-    }
-  });
-
+const gameRoute = require('./Routes/api/game');
 app.get('/', (req, res) => {
     res.send('Hello World');
 })
@@ -239,57 +232,7 @@ app.get('/api/:userId/payment/card/:cardId', async (req, res) => {
 
 // Games
 
-app.post('/api/:userId/game/:gameName', (req,res) => {
-    
-    const newGame = {
-        USER_ID: req.params.userId,
-        GAME_NAME: `'${req.params.gameName}'`,
-        JOINED_DATE: Date.now()        
-    }
-
-    
-    if (isNaN(newGame.USER_ID)) {
-        res.send('Request couldn\'t be sent');
-        return;
-    }
-
-    const regex = new RegExp(/^[a-zA-Z0-9_'\-]+$/);
-    if (!regex.test(newGame.GAME_NAME)) {
-        res.send("t'as essayé de nous entuber petite p*te?");
-        return;
-    }
-
-    res.send(tools.insertNewGame(newGame, knex) ? 'created': 'Request couldn\'t be sent');
-})
-
-app.post('/api/:userId/game/update/:gameName', async (req,res) => {
-    
-    const newStatus = {
-        STATUS: req.body.status,
-        USER_ID: req.params.userId,
-        GAME_NAME: `'${req.params.gameName}'`
-    }
-
-    if (!tools.isNumberOfLengthN(newStatus.STATUS, 1) || (newStatus.STATUS != 0 && newStatus.STATUS != 1)) {
-        res.send('Request couldn\'t be sent1');
-        return;
-    }
-    
-    if (isNaN(newStatus.USER_ID)) {
-        res.send('Request couldn\'t be sent2');
-        return;
-    }
-
-    const regex = new RegExp(/^[a-zA-Z0-9_'\-]+$/);
-    if (!regex.test(newStatus.GAME_NAME)) {
-        res.send("t'as essayé de nous entuber petite p*te?");
-        return;
-    }
-    let test = await tools.setStatus(newStatus, knex);
-    console.log('yoyo ',test[0].changedRows);
-
-    res.send( test[0].changedRows ? 'updated': 'Error');
-})
+app.use('/api/game', gameRoute);
 
 
 app.listen(3000);
