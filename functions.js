@@ -1,16 +1,5 @@
 const validator = require("email-validator");
 
-const validateGameParams = function (req, res, next) {
-    const { userId, gameName } = req.params;
-    const regex = new RegExp(/^[a-zA-Z0-9_'\-]+$/);
-
-    if (userId && !isNaN(userId) && gameName  && regex.test(gameName)) {
-        next();
-    } else {
-        res.status(406).send({ msg: 'Invalid arguments' })
-    }
-};
-
 const isNumberOfLengthN = function (number, length) {
     if (number || number === 0) {
         return number.toString().length !== length || isNaN(number) ? false : true;
@@ -18,6 +7,14 @@ const isNumberOfLengthN = function (number, length) {
         return false
     }
 };
+
+const validateGameName = function (req, res, next) {
+    const { gameName } = req.params;
+    const regex = new RegExp(/^[a-zA-Z0-9_'\-]+$/);
+
+    if (!(gameName && regex.test(gameName))) res.status(406).send({ msg: 'Bad gameName' }) 
+    else next();
+}; 
 
 const validateInsertUserBody = function (req, res, next) {
     const usernameReg = new RegExp(/^[a-zA-Z0-9_\-]+$/);
@@ -119,10 +116,10 @@ const deleteCard = async function (DTO, knex) {
     return response;
 };
 
-const deleteCards = async function (DTO, knex) {
+const deleteCards = async function (USER_ID, knex) {
     const  sqlQuery = `
         DELETE FROM payment
-        WHERE USER_ID = ${DTO.USER_ID}
+        WHERE USER_ID = ${USER_ID}
     `;
 
     let response;
@@ -147,9 +144,9 @@ const getCards = async function (USER_ID, knex) {
 };
 
 const getCard = async function (card, knex) {
-    let rep;
+    let response;
     try {
-        rep = await knex.select().from('PAYMENT').where({
+        response = await knex.select().from('payment').where({
             CARD_ID: card.CARD_ID,
             USER_ID: card.USER_ID
         })
@@ -157,7 +154,7 @@ const getCard = async function (card, knex) {
         console.error('error: ', e);
         return [];
     }
-    return rep;
+    return response;
 };
 
 const insertNewGame = async function (newGame, knex) {
@@ -252,7 +249,108 @@ const setWastedTime = async function (DTO, knex) {
     return response;
 };
 
-module.exports.validateGameParams = validateGameParams;
+const getStatus = async function (DTO, knex) {
+    let response;
+    try {
+        response = await knex.select("STATUS").from('library').where({
+            USER_ID: DTO.USER_ID,
+            GAME_NAME: DTO.GAME_NAME
+        })
+    } catch (e) {
+        console.error('error: ', e);
+        return [];
+    }
+    return response;
+}
+
+const getGameJoinedDate = async function (DTO, knex) {
+    let response;
+    try {
+        response = await knex.select("JOINED_DATE").from('library').where({
+            USER_ID: DTO.USER_ID,
+            GAME_NAME: DTO.GAME_NAME
+        })
+    } catch (e) {
+        console.error('error: ', e);
+        return [];
+    }
+    return response;
+}
+
+const formatDate = function(dateToFormat) {
+    const date = new Date(parseInt(dateToFormat));
+    const formattedDate = [
+        date.getFullYear(),
+        date.getMonth().toString().length < 2 ? `0${date.getMonth() + 1}` : date.getMonth(),
+        date.getDate().toString().length < 2 ? `0${date.getDate()}` : date.getDate()
+    ];
+    return formattedDate.join('-');
+}
+
+const getWastedTime = async function (DTO, knex) {
+    let response;
+    try {
+        response = await knex.select("WASTED_TIME").from('library').where({
+            USER_ID: DTO.USER_ID,
+            GAME_NAME: DTO.GAME_NAME
+        })
+    } catch (e) {
+        console.error('error: ', e);
+        return [];
+    }
+    return response;
+}
+
+const getLastBan = async function (DTO, knex) {
+    let response;
+    const sqlQuery = `
+    SELECT USER_ID, DATE, DURATION, REASON  
+    FROM suspended 
+    WHERE LIBRARY_ID = (
+        SELECT LIBRARY_ID 
+        FROM library 
+        WHERE USER_ID = ${DTO.USER_ID} 
+        AND GAME_NAME = '${DTO.GAME_NAME}'
+    )
+    ORDER BY SUSPENDED_ID DESC
+    LIMIT 1
+    `;
+
+    try {
+        response = await knex.raw(sqlQuery);
+    } catch (e) {
+        console.error('error: ', e);
+        return [];
+    }
+    console.log(response);
+    return response;
+}
+
+const getAllBans = async function (DTO, knex) {
+    let response;
+    const sqlQuery = `
+    SELECT USER_ID, DATE, DURATION, REASON  
+    FROM suspended 
+    WHERE LIBRARY_ID = (
+        SELECT LIBRARY_ID 
+        FROM library 
+        WHERE USER_ID = ${DTO.USER_ID} 
+        AND GAME_NAME = '${DTO.GAME_NAME}'
+    )
+    ORDER BY SUSPENDED_ID DESC
+    `;
+
+    try {
+        response = await knex.raw(sqlQuery);
+    } catch (e) {
+        console.error('error: ', e);
+        return [];
+    }
+    console.log(response);
+    return response;
+}
+
+module.exports.validateGameName = validateGameName;
 module.exports.isNumberOfLengthN = isNumberOfLengthN;
 module.exports.validateInsertUserBody = validateInsertUserBody;
 module.exports.validateLoginBody = validateLoginBody;
@@ -269,3 +367,9 @@ module.exports.insertNewGame = insertNewGame;
 module.exports.setStatus = setStatus;
 module.exports.insertNewBan = insertNewBan;
 module.exports.setWastedTime = setWastedTime;
+module.exports.getStatus = getStatus;
+module.exports.getGameJoinedDate = getGameJoinedDate;
+module.exports.formatDate = formatDate;
+module.exports.getWastedTime = getWastedTime;
+module.exports.getLastBan = getLastBan;
+module.exports.getAllBans = getAllBans;

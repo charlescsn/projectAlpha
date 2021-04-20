@@ -5,7 +5,7 @@ const router = Router();
 const tools = require('../../functions');
 
 
-router.post('/:userId/:gameName', tools.validateGameParams, async (req, res) => {
+router.post('/:userId/:gameName', [tools.validateGameName, tools.validateUserId ], async (req, res) => {
     const { userId, gameName } = req.params;
 
     const newGame = {
@@ -18,7 +18,7 @@ router.post('/:userId/:gameName', tools.validateGameParams, async (req, res) => 
     res.send( response[0].affectedRows ? 'created': 'Error');
 });
 
-router.post('/update/:userId/:gameName', async (req,res) => {
+router.post('/update/:userId/:gameName', tools.validateUserId, async (req,res) => {
     const { userId, gameName } = req.params;
 
     const newStatus = {
@@ -37,7 +37,7 @@ router.post('/update/:userId/:gameName', async (req,res) => {
     res.send( response[0].changedRows ? 'updated': 'Error');
 });
 
-router.post('/ban/:userId/:gameName', async (req,res) => {
+router.post('/ban/:userId/:gameName', tools.validateUserId, async (req,res) => {
     const { userId, gameName } = req.params;
     reason = req.body.reason;
 
@@ -59,12 +59,12 @@ router.post('/ban/:userId/:gameName', async (req,res) => {
     res.send( response[0].affectedRows ? 'created': 'Error');
 });
 
-router.post('/wastedTime/:userId/:gameName', tools.validateGameParams, async (req,res) => {
+router.post('/wastedTime/update/:userId/:gameName', [tools.validateGameName, tools.validateUserId ], async (req,res) => {
     const { userId, gameName } = req.params;
     const time = Number(req.body.time)
 
     const timeDTO = {
-        WASTED_TIME: Number(req.body.time) * 1000 * 60,
+        WASTED_TIME: Number(req.body.time),
         USER_ID: userId,
         GAME_NAME: `'${gameName}'`,
     }
@@ -79,8 +79,113 @@ router.post('/wastedTime/:userId/:gameName', tools.validateGameParams, async (re
     res.send( response[0].changedRows ? 'updated': 'Error');
 });
 
-router.get('/status/:userId/:gameName', (req, res) => {
+router.get('/status/:userId/:gameName', [tools.validateGameName, tools.validateUserId ], async (req, res) => {
+    const statusDTO = {
+        USER_ID: req.params.userId,
+        GAME_NAME: req.params.gameName
+    }
 
-})
+    const rep = await tools.getStatus(statusDTO, knex);
+    if (rep.length == 0) {
+        res.status(404).json({
+            statusCode: 404,
+            message: "No data found :/",
+        });
+        return;
+    }
+    res.status(200).json({
+        statusCode: 200,
+        message: "Successful",
+        data: rep,
+    });
+});
+
+router.get('/joinedDate/:userId/:gameName', [tools.validateGameName, tools.validateUserId ], async (req, res) => {
+    const joinedDateDTO = {
+        USER_ID: req.params.userId,
+        GAME_NAME: req.params.gameName
+    }
+
+    const response = await tools.getGameJoinedDate(joinedDateDTO, knex);
+    if (response.length == 0) {
+        res.status(404).json({
+            statusCode: 404,
+            message: "No data found :/",
+        });
+        return;
+    }
+
+    res.status(200).json({
+        statusCode: 200,
+        message: "Successful",
+        data: tools.formatDate(response[0].JOINED_DATE),
+    });
+});
+
+router.get('/wastedTime/:userId/:gameName', [tools.validateGameName, tools.validateUserId ], async (req, res) => {
+    const wastedTimeDTO = {
+        USER_ID: req.params.userId,
+        GAME_NAME: req.params.gameName
+    }
+
+    const response = await tools.getWastedTime(wastedTimeDTO, knex);
+    if (response.length == 0) {
+        res.status(404).json({
+            statusCode: 404,
+            message: "No data found :/",
+        });
+        return;
+    }
+
+    res.status(200).json({
+        statusCode: 200,
+        message: "Successful",
+        data: response,
+    });
+});
+
+router.get('/ban/last/:userId/:gameName', [tools.validateGameName, tools.validateUserId ], async (req, res) => {
+    const lastBanDTO = {
+        USER_ID: req.params.userId,
+        GAME_NAME: req.params.gameName
+    }
+
+    const response = await tools.getLastBan(lastBanDTO, knex);
+    if (response[0].length == 0) {
+        res.status(404).json({
+            statusCode: 404,
+            message: "No data found :/",
+        });
+        return;
+    }
+
+    res.status(200).json({
+        statusCode: 200,
+        message: "Successful",
+        data: response[0],
+    });
+});
+
+router.get('/ban/all/:userId/:gameName', [tools.validateGameName, tools.validateUserId ], async (req, res) => {
+    const allBansDTO = {
+        USER_ID: req.params.userId,
+        GAME_NAME: req.params.gameName
+    }
+
+    const response = await tools.getAllBans(allBansDTO, knex);
+    if (response[0].length == 0) {
+        res.status(404).json({
+            statusCode: 404,
+            message: "No data found :/",
+        });
+        return;
+    }
+
+    res.status(200).json({
+        statusCode: 200,
+        message: "Successful",
+        data: response[0],
+    });
+});
 
 module.exports = router;
