@@ -22,7 +22,6 @@ router.post('/create', tools.validateInsertUserBody, (req, res) => {
         }
     
         const response = await tools.insertNewUser(user, knex);
-        console.log(response);
         res.send( response[0][0].affectedRows && response[1][0].affectedRows ? 'created' : 'Error');
     });
 });

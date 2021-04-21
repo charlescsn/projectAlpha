@@ -54,4 +54,58 @@ router.post('/auth/update/:userId', tools.validateUserId, tools.validatePhoneNum
 
 })
 
+router.get('/activity/:userId', tools.validateUserId, async (req, res) => {
+    let response;
+    response = await tools.getActivity(req.params.userId, knex);
+    if (response.length == 0) {
+        res.status(404).json({
+            statusCode: 404,
+            message: "No data found :/",
+        });
+        return;
+    }
+
+    res.status(200).json({
+        statusCode: 200,
+        message: "Successful",
+        data: response[0],
+    });
+})
+
+router.get('/questions/:userId', tools.validateUserId, async (req, res) => {
+    let response;
+    response = await tools.getQuestions(req.params.userId, knex);
+    if (response.length == 0) {
+        res.status(404).json({
+            statusCode: 404,
+            message: "No data found :/",
+        });
+        return;
+    }
+
+    res.status(200).json({
+        statusCode: 200,
+        message: "Successful",
+        data: response[0],
+    });
+})
+
+router.get('/auth/:userId', tools.validateUserId, async (req, res) => {
+    let response;
+    response = await tools.getAuth(req.params.userId, knex);
+    if (response.length == 0) {
+        res.status(404).json({
+            statusCode: 404,
+            message: "No data found :/",
+        });
+        return;
+    }
+
+    res.status(200).json({
+        statusCode: 200,
+        message: "Successful",
+        data: response[0],
+    });
+})
+
 module.exports = router;

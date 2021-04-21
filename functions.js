@@ -170,6 +170,7 @@ const updatePhoneNumber = async function (dto, knex) {
     }
     return response;
 };
+
 const insertNewCard = async function (DTO, knex) {
     const columns = Object.keys(DTO);
     const rows = Object.values(DTO);
@@ -403,7 +404,6 @@ const getLastBan = async function (DTO, knex) {
         console.error('error: ', e);
         return [];
     }
-    console.log(response);
     return response;
 }
 
@@ -518,7 +518,56 @@ const updateAuth = async function (dto, knex) {
 
 }
 
+const getActivity = async function (userId, knex) {
+    let response;
+    const sqlQuery = `
+    SELECT RECENT_ACTIVITY_DATE, RECENT_ACTIVITY_LOCATION, RECENT_ACTIVITY_DEVICE
+    FROM seqrity 
+    WHERE USER_ID = ${userId}
+    `;
 
+    try {
+        response = await knex.raw(sqlQuery);
+    } catch (e) {
+        console.error('error: ', e);
+        return [];
+    }
+    return response;
+}
+
+const getQuestions = async function (userId, knex) {
+    let response;
+    const sqlQuery = `
+    SELECT SECRET_QUESTION_1, SECRET_QUESTION_2, SECRET_ANSWER_1, SECRET_ANSWER_2
+    FROM seqrity 
+    WHERE USER_ID = ${userId}
+    `;
+
+    try {
+        response = await knex.raw(sqlQuery);
+    } catch (e) {
+        console.error('error: ', e);
+        return [];
+    }
+    return response;
+}
+
+const getAuth = async function (userId, knex) {
+    let response;
+    const sqlQuery = `
+    SELECT AUTHENTIFICATOR
+    FROM seqrity 
+    WHERE USER_ID = ${userId}
+    `;
+
+    try {
+        response = await knex.raw(sqlQuery);
+    } catch (e) {
+        console.error('error: ', e);
+        return [];
+    }
+    return response;
+}
 
 
 
@@ -553,3 +602,6 @@ module.exports.getAllBans = getAllBans;
 module.exports.updateRecentActivity = updateRecentActivity;
 module.exports.updateQuestions = updateQuestions;
 module.exports.updateAuth = updateAuth;
+module.exports.getActivity = getActivity;
+module.exports.getQuestions = getQuestions;
+module.exports.getAuth = getAuth;
