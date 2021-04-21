@@ -16,7 +16,7 @@ router.post('/create', tools.validateInsertUserBody, (req, res) => {
             USERNAME: req.body.username,
             EMAIL: req.body.email,
             PWD: hash,
-            JOINED_DATE: Date.now(),
+            JOINED_DATE: tools.formatDate(Date.now()),
             BIRTHDATE: req.body.birthdate,
             COUNTRY: req.body.country
         }
@@ -30,7 +30,7 @@ router.post('/create', tools.validateInsertUserBody, (req, res) => {
 
 // Login check
 
-router.post('/login', tools.validateLoginBody, async (req, res) => {
+router.post('/login', tools.validateUsername, async (req, res) => {
     const login = {
         PLATEFORME_ID: req.body.platId,
         USERNAME: req.body.username,
@@ -51,6 +51,23 @@ router.post('/login', tools.validateLoginBody, async (req, res) => {
     bcrypt.compare(login.PWD, user_hash[0].PWD).then(result => {
         res.send(result ? `Welcome ${login.USERNAME} !`: "Password and / or username don't match");
     })
+});
+
+router.get('/:username', tools.validateUsername, async (req, res) => {
+    const response = await tools.getUser(req.params.username, knex);
+    if (response.length == 0) {
+        res.status(404).json({
+            statusCode: 404,
+            message: "No data found :/",
+        });
+        return;
+    }
+
+    res.status(200).json({
+        statusCode: 200,
+        message: "Successful",
+        data: response,
+    });
 });
 
 module.exports = router;

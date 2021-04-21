@@ -31,7 +31,7 @@ const validateInsertUserBody = function (req, res, next) {
     else next();
 };
 
-const validateLoginBody = function (req, res, next) {
+const validateUsername = function (req, res, next) {
     const usernameReg = new RegExp(/^[a-zA-Z0-9_\-]+$/);
     // username test
     if (!usernameReg.test(req.body.username)) res.status(406).send({msg: "Bad username"});
@@ -78,6 +78,20 @@ const insertNewUser = async function (DTO, knex) {
         return false;
     }
     return request;
+};
+
+const getUser = async function (username, knex) {
+    let rep;
+    try {
+        rep = await knex
+        .select('USER_ID', 'USERNAME', 'EMAIL', 'PHONENUMBER', 'JOINED_DATE', 'BIRTHDATE', 'COUNTRY')
+        .from('user')
+        .where('USERNAME', username);
+    } catch (e) {
+        console.error('error: ', e);
+        return [];
+    }
+    return rep;
 };
 
 const insertNewCard = async function (DTO, knex) {
@@ -213,6 +227,7 @@ const insertNewBan = async function (newBan, knex) {
     VALUES (${rows.join(',')}, (SELECT LIBRARY_ID FROM library WHERE USER_ID = ${newBan.USER_ID} AND GAME_NAME = ${newBan.GAME_NAME}))
     `;
 
+    console.log(sqlQuery);
     const newStatus = {
         STATUS: 10,
         USER_ID: newBan.USER_ID,
@@ -353,11 +368,12 @@ const getAllBans = async function (DTO, knex) {
 module.exports.validateGameName = validateGameName;
 module.exports.isNumberOfLengthN = isNumberOfLengthN;
 module.exports.validateInsertUserBody = validateInsertUserBody;
-module.exports.validateLoginBody = validateLoginBody;
+module.exports.validateUsername = validateUsername;
 module.exports.validateUserId = validateUserId;
 module.exports.validateCardId = validateCardId;
 module.exports.validateInsertCard = validateInsertCard;
 module.exports.insertNewUser = insertNewUser;
+module.exports.getUser = getUser;
 module.exports.insertNewCard = insertNewCard;
 module.exports.deleteCard = deleteCard;
 module.exports.deleteCards = deleteCards;

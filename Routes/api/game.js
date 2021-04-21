@@ -11,7 +11,7 @@ router.post('/:userId/:gameName', [tools.validateGameName, tools.validateUserId 
     const newGame = {
         USER_ID: userId,
         GAME_NAME: `'${gameName}'`,
-        JOINED_DATE: Date.now()        
+        JOINED_DATE: tools.formatDate(Date.now())        
     }
 
     let response = await tools.insertNewGame(newGame, knex);
@@ -43,11 +43,13 @@ router.post('/ban/:userId/:gameName', tools.validateUserId, async (req,res) => {
 
     const newBan = {
         REASON: `'${reason.replace(/\'/g, "\\'")}'`,
-        DURATION: Number(req.body.duration)*1000*60*60*24,
+        DURATION: Number(req.body.duration),
         USER_ID: userId,
-        DATE: Date.now(),
+        DATE: `'${tools.formatDate(Date.now())}'`,
         GAME_NAME: `'${gameName}'`
     };
+
+    console.log(newBan);
 
     if (!newBan.DURATION) {
         res.status(406).send({ msg: 'Invalid arguments' });
@@ -118,7 +120,7 @@ router.get('/joinedDate/:userId/:gameName', [tools.validateGameName, tools.valid
     res.status(200).json({
         statusCode: 200,
         message: "Successful",
-        data: tools.formatDate(response[0].JOINED_DATE),
+        data: response[0].JOINED_DATE,
     });
 });
 
