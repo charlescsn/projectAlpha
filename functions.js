@@ -365,6 +365,8 @@ const getAllBans = async function (DTO, knex) {
     return response;
 }
 
+
+
 module.exports.validateGameName = validateGameName;
 module.exports.isNumberOfLengthN = isNumberOfLengthN;
 module.exports.validateInsertUserBody = validateInsertUserBody;
