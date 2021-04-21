@@ -4,9 +4,6 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const tools = require('./functions');
-const knex = require('./database');
-
 const userRoute = require('./Routes/api/user');
 const paymentRoute = require('./Routes/api/payment');
 const gameRoute = require('./Routes/api/game');
