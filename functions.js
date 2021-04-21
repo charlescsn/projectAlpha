@@ -38,7 +38,7 @@ const validateUsername = function (req, res, next) {
     else next();
 };
 
-const validateUserId = async function (req, res, next) {
+const validateUserId = function (req, res, next) {
     if (isNaN(req.params.userId)) res.status(406).send({msg: "Bad userId"});
     else next();
 };
@@ -61,6 +61,58 @@ const validateInsertCard = async function (req, res, next) {
     else next();
 };
 
+const validateActivityBody = function (req, res, next) {
+    const deviceReg = new RegExp(/^[0-9.]+$/);
+    const locationReg = new RegExp(/^[a-zA-Z_\-, ]+$/);
+    // device test
+    if (!deviceReg.test(req.body.device)) res.status(406).send({msg: "Bad IP sorry"});
+    // location test
+    else if (!locationReg.test(req.body.location)) res.status(406).send({msg: "Bad location sorry"});
+    else next();
+}
+
+const validateQuestionsBody = function (req, res, next) {
+    const questionReg = new RegExp(/^[a-zA-Z0-9_\-? ,]+$/);
+    const answerReg = new RegExp(/^[a-zA-Z0-9_\-, !.]+$/);
+    // eRegs test
+    if (!questionReg.test(req.body.SECRET_QUESTION_1)) res.status(406).send({msg: "Bad question1"});
+    else if (!questionReg.test(req.body.SECRET_QUESTION_2)) res.status(406).send({msg: "Bad question2"});
+    // answers test
+    else if (!answerReg.test(req.body.SECRET_ANSWER_1)) res.status(406).send({msg: "Bad answer1"});
+    else if (!answerReg.test(req.body.SECRET_ANSWER_2)) res.status(406).send({msg: "Bad answer2"});
+    else next();
+}
+
+const validateBool = function (bool) {
+    if (bool > 1 || isNaN(bool)) {
+        return false;
+    }
+    return true;
+}
+
+const validatePhoneNumber = function (req, res, next) {
+    const {phoneNumber, auth} = req.params;
+    const phoneReg = new RegExp(/^[0-9]+$/);
+
+    if (auth === 1) {
+        if (phoneReg.test(phoneNumber) && phoneNumber.length == 10) {
+            next();
+        }
+        res.status(406).json({msg: "Bad phoneNumber"});
+    }
+    next();
+}
+
+const formatDate = function(dateToFormat) {
+    const date = new Date(parseInt(dateToFormat));
+    const formattedDate = [
+        date.getFullYear(),
+        date.getMonth().toString().length < 2 ? `0${date.getMonth() + 1}` : date.getMonth(),
+        date.getDate().toString().length < 2 ? `0${date.getDate()}` : date.getDate()
+    ];
+    return formattedDate.join('-');
+}
+
 const insertNewUser = async function (DTO, knex) {
     const columns = Object.keys(DTO);
     const rows = Object.values(DTO);
@@ -70,14 +122,22 @@ const insertNewUser = async function (DTO, knex) {
         VALUES (${rows.map(value => `'${value}'`).join(",")})
     `;
 
-    let request;
+    let request1;
     try {
-        request = await knex.raw(sqlQuery);
+        request1 = await knex.raw(sqlQuery);
     } catch (error) {
         console.error('error : ', error);
         return false;
     }
-    return request;
+
+    let request2;
+    try {
+        request2 = await insertEmptySeqrity(knex);
+    } catch (error) {
+        console.error('error : ', error);
+        return false;
+    }
+    return [request1, request2];
 };
 
 const getUser = async function (username, knex) {
@@ -94,6 +154,22 @@ const getUser = async function (username, knex) {
     return rep;
 };
 
+const updatePhoneNumber = async function (dto, knex) {
+    const sqlQuery = `
+        UPDATE user
+        SET PHONENUMBER = '${dto.PHONENUMBER}'
+        WHERE USER_ID = ${dto.USER_ID}
+    `;
+
+    let response;
+    try {
+        response = await knex.raw(sqlQuery);
+    } catch (error) {
+        console.error('error : ', error);
+        return false;
+    }
+    return response;
+};
 const insertNewCard = async function (DTO, knex) {
     const columns = Object.keys(DTO);
     const rows = Object.values(DTO);
@@ -292,16 +368,6 @@ const getGameJoinedDate = async function (DTO, knex) {
     return response;
 }
 
-const formatDate = function(dateToFormat) {
-    const date = new Date(parseInt(dateToFormat));
-    const formattedDate = [
-        date.getFullYear(),
-        date.getMonth().toString().length < 2 ? `0${date.getMonth() + 1}` : date.getMonth(),
-        date.getDate().toString().length < 2 ? `0${date.getDate()}` : date.getDate()
-    ];
-    return formattedDate.join('-');
-}
-
 const getWastedTime = async function (DTO, knex) {
     let response;
     try {
@@ -365,6 +431,95 @@ const getAllBans = async function (DTO, knex) {
     return response;
 }
 
+const insertEmptySeqrity = async function (knex) {
+    const sqlQuery = `
+    INSERT INTO seqrity(USER_ID)
+    VALUES (NULL);
+    `;
+    let response;
+
+    try {
+        response = await knex.raw(sqlQuery)
+    } catch (e) {
+        console.error('error: ', e);
+        return false;
+    }
+    return response;
+}
+
+const updateRecentActivity = async function (dto, knex) {
+    const sqlQuery = `
+    UPDATE seqrity
+    SET RECENT_ACTIVITY_DATE = ${dto.RECENT_ACTIVITY_DATE},
+    RECENT_ACTIVITY_LOCATION = ${dto.RECENT_ACTIVITY_LOCATION},
+    RECENT_ACTIVITY_DEVICE = ${dto.RECENT_ACTIVITY_DEVICE}
+    WHERE USER_ID = ${dto.USER_ID};
+    `;
+    let response;
+
+    try {
+        response = await knex.raw(sqlQuery)
+    } catch (e) {
+        console.error('error: ', e);
+        return false;
+    }
+    return response;
+}
+
+const updateQuestions = async function (dto, knex) {
+    const sqlQuery = `
+    UPDATE seqrity
+    SET SECRET_QUESTION_1 = ${dto.SECRET_QUESTION_1},
+    SECRET_QUESTION_2 = ${dto.SECRET_QUESTION_2},
+    SECRET_ANSWER_1 = ${dto.SECRET_ANSWER_1},
+    SECRET_ANSWER_2 = ${dto.SECRET_ANSWER_2}
+    WHERE USER_ID = ${dto.USER_ID};
+    `;
+    let response;
+
+    try {
+        response = await knex.raw(sqlQuery)
+    } catch (e) {
+        console.error('error: ', e);
+        return false;
+    }
+    return response;
+}
+
+const updateAuth = async function (dto, knex) {
+    const sqlQuery = `
+    UPDATE seqrity
+    SET AUTHENTIFICATOR = ${dto.AUTH}
+    WHERE USER_ID = ${dto.USER_ID}
+    `;
+
+    let request;
+
+    try {
+        request = await knex.raw(sqlQuery)
+    } catch (e) {
+        console.error('error: ', e);
+        return false;
+    }
+
+    if (dto.AUTH) {
+        let request2;
+
+        try {
+            request2 = await updatePhoneNumber(dto, knex);
+        } catch (error) {
+            console.error('error : ', error);
+            return false;
+        }
+        return [request, request2];
+    }
+    return request;
+        
+
+}
+
+
+
 
 
 module.exports.validateGameName = validateGameName;
@@ -374,6 +529,11 @@ module.exports.validateUsername = validateUsername;
 module.exports.validateUserId = validateUserId;
 module.exports.validateCardId = validateCardId;
 module.exports.validateInsertCard = validateInsertCard;
+module.exports.validateActivityBody = validateActivityBody;
+module.exports.validateQuestionsBody = validateQuestionsBody;
+module.exports.validateBool = validateBool;
+module.exports.validatePhoneNumber = validatePhoneNumber;
+module.exports.formatDate = formatDate;
 module.exports.insertNewUser = insertNewUser;
 module.exports.getUser = getUser;
 module.exports.insertNewCard = insertNewCard;
@@ -387,7 +547,9 @@ module.exports.insertNewBan = insertNewBan;
 module.exports.setWastedTime = setWastedTime;
 module.exports.getStatus = getStatus;
 module.exports.getGameJoinedDate = getGameJoinedDate;
-module.exports.formatDate = formatDate;
 module.exports.getWastedTime = getWastedTime;
 module.exports.getLastBan = getLastBan;
 module.exports.getAllBans = getAllBans;
+module.exports.updateRecentActivity = updateRecentActivity;
+module.exports.updateQuestions = updateQuestions;
+module.exports.updateAuth = updateAuth;

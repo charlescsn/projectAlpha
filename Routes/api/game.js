@@ -27,7 +27,7 @@ router.post('/update/:userId/:gameName', tools.validateUserId, async (req,res) =
         GAME_NAME: `'${gameName}'`
     };
 
-    if (newStatus.STATUS > 1) {
+    if (!tools.validateBool(newStatus.STATUS)) {
         res.status(406).send({ msg: 'Invalid arguments' });
         return;
     }

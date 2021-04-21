@@ -22,9 +22,8 @@ router.post('/create', tools.validateInsertUserBody, (req, res) => {
         }
     
         const response = await tools.insertNewUser(user, knex);
-
-        res.send( response[0].affectedRows ? 'created' : 'Error');
-
+        console.log(response);
+        res.send( response[0][0].affectedRows && response[1][0].affectedRows ? 'created' : 'Error');
     });
 });
 
@@ -51,6 +50,10 @@ router.post('/login', tools.validateUsername, async (req, res) => {
     bcrypt.compare(login.PWD, user_hash[0].PWD).then(result => {
         res.send(result ? `Welcome ${login.USERNAME} !`: "Password and / or username don't match");
     })
+});
+
+router.post('/delete/:userId', tools.validateUserId, async (req, res) => {
+    res.status(200).json({msg: 'User deleted'});
 });
 
 router.get('/:username', tools.validateUsername, async (req, res) => {
