@@ -103,6 +103,14 @@ const validatePhoneNumber = function (req, res, next) {
     next();
 }
 
+const validateApiKey = function (req, res, next) {
+    const { apiKey } = req.params;
+    const apiKeyReg = new RegExp(/^[a-zA-Z0-9]+$/);
+
+    if (apiKeyReg.test(apiKey)) next();
+    else res.status(406).send({msg: 'Bad Api Key'})
+}
+
 const formatDate = function(dateToFormat) {
     const date = new Date(parseInt(dateToFormat));
     const formattedDate = [
@@ -569,6 +577,20 @@ const getAuth = async function (userId, knex) {
     return response;
 }
 
+const checkApiKey = async function (apiKey, knex) {
+
+    let response;
+    try {
+        response = await knex.select()
+            .from('plateforme')
+            .where('API_KEY', apiKey);
+    } catch (error) {
+        console.error(error);
+        return false;
+    }
+    return response[0] ? true : false;
+}
+
 
 
 module.exports.validateGameName = validateGameName;
@@ -582,6 +604,7 @@ module.exports.validateActivityBody = validateActivityBody;
 module.exports.validateQuestionsBody = validateQuestionsBody;
 module.exports.validateBool = validateBool;
 module.exports.validatePhoneNumber = validatePhoneNumber;
+module.exports.validateApiKey = validateApiKey;
 module.exports.formatDate = formatDate;
 module.exports.insertNewUser = insertNewUser;
 module.exports.getUser = getUser;
@@ -605,3 +628,4 @@ module.exports.updateAuth = updateAuth;
 module.exports.getActivity = getActivity;
 module.exports.getQuestions = getQuestions;
 module.exports.getAuth = getAuth;
+module.exports.checkApiKey = checkApiKey;

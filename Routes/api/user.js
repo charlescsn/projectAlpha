@@ -51,9 +51,13 @@ router.post('/login', tools.validateUsername, async (req, res) => {
     })
 });
 
+// Delete User
+
 router.post('/delete/:userId', tools.validateUserId, async (req, res) => {
     res.status(200).json({msg: 'User deleted'});
 });
+
+// Get user info by username
 
 router.get('/:username', tools.validateUsername, async (req, res) => {
     const response = await tools.getUser(req.params.username, knex);

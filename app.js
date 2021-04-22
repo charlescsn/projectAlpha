@@ -1,6 +1,10 @@
 const express = require('express');
 const app = express();
 
+const knex = require('./database');
+const tools = require('./functions');
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -14,21 +18,34 @@ app.get('/', (req, res) => {
     res.send('Hello World');
 })
 
+app.use('/api/:apiKey', tools.validateApiKey, async (req, res, next) => {
+
+    const response = await tools.checkApiKey(req.params.apiKey, knex);
+
+    if (response) {
+        next();
+    } else {
+        res.status(406).send({msg: 'U get out of here or check pricing page'});
+    }
+
+})
+
 // User
 
-app.use('/api/user', userRoute);
+app.use('/api/:apiKey/user', userRoute);
 
 // Payment
 
-app.use('/api/payment', paymentRoute);
+app.use('/api/:apiKey/payment', paymentRoute);
 
 // Games
 
-app.use('/api/game', gameRoute);
+app.use('/api/:apiKey/game', gameRoute);
 
 // Seqrity
 
-app.use('/api/security', seqrityRoute);
+app.use('/api/:apiKey/security', seqrityRoute);
+
 
 
 app.listen(3000);
