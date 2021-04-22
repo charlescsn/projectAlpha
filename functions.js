@@ -1,5 +1,10 @@
 const validator = require("email-validator");
 
+require('dotenv').config();
+var nodemailer = require('nodemailer');
+
+
+
 const isNumberOfLengthN = function (number, length) {
     if (number || number === 0) {
         return number.toString().length !== length || isNaN(number) ? false : true;
@@ -591,6 +596,33 @@ const checkApiKey = async function (apiKey, knex) {
     return response[0] ? true : false;
 }
 
+const sendInscriptionMail = function (DTO) {
+    const { email, username } = DTO;
+
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_ADDRESS,
+          pass: process.env.EMAIL_PASSWORD
+        }
+      });
+      
+      const mailOptions = {
+        from: 'mail.projectalpha@gmail.com',
+        to: email,
+        subject: `Welcome ${username} !`,
+        text: 'We have registered a new connection using your email! We hope it was u cause we\'re not going to do anything about it.'
+      };
+      
+      transporter.sendMail(mailOptions, function(error, info){
+        if (error) {
+          console.log(error);
+        } else {
+          console.log('Email sent: ' + info.response);
+        }
+      }); 
+      
+}
 
 
 module.exports.validateGameName = validateGameName;
@@ -629,3 +661,4 @@ module.exports.getActivity = getActivity;
 module.exports.getQuestions = getQuestions;
 module.exports.getAuth = getAuth;
 module.exports.checkApiKey = checkApiKey;
+module.exports.sendInscriptionMail = sendInscriptionMail;

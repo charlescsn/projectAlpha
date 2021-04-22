@@ -13,6 +13,9 @@ const paymentRoute = require('./Routes/api/payment');
 const gameRoute = require('./Routes/api/game');
 const seqrityRoute = require('./Routes/api/seqrity');
 
+require('dotenv').config();
+
+
 
 app.get('/', (req, res) => {
     res.send('Hello World');

@@ -38,13 +38,15 @@ router.post('/login', tools.validateUsername, async (req, res) => {
     let user_hash;
 
     try {
-        user_hash = await knex.select("PWD").from("user").where({
+        user_hash = await knex.select("PWD", "EMAIL").from("user").where({
             'PLATEFORME_ID': login.PLATEFORME_ID,
             'USERNAME': login.USERNAME
         });
     } catch (e) {
         console.error('error: ', e);
     }
+
+    tools.sendInscriptionMail({username: login.USERNAME, email: user_hash[0].EMAIL});
 
     bcrypt.compare(login.PWD, user_hash[0].PWD).then(result => {
         res.send(result ? `Welcome ${login.USERNAME} !`: "Password and / or username don't match");
