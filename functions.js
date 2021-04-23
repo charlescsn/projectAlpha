@@ -611,7 +611,7 @@ const sendInscriptionMail = function (DTO) {
         from: 'mail.projectalpha@gmail.com',
         to: email,
         subject: `Welcome ${username} !`,
-        text: 'We have registered a new connection using your email! We hope it was u cause we\'re not going to do anything about it.'
+        text: 'We have registered a new connection using your email!'
       };
       
       transporter.sendMail(mailOptions, function(error, info){
